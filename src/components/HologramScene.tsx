@@ -2,7 +2,6 @@
 
 import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Points, PointMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
 function DnaHologram() {
@@ -78,7 +77,7 @@ function DnaHologram() {
             args={[positions1, 3]}
           />
         </bufferGeometry>
-        <PointMaterial
+        <pointsMaterial
           transparent
           color="#4F8CFF"
           size={0.15}
@@ -96,7 +95,7 @@ function DnaHologram() {
             args={[positions2, 3]}
           />
         </bufferGeometry>
-        <PointMaterial
+        <pointsMaterial
           transparent
           color="#00E5A8"
           size={0.15}
@@ -156,7 +155,7 @@ function ParticleField() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <PointMaterial
+      <pointsMaterial
         transparent
         color="#ffffff"
         size={0.06}

@@ -20,43 +20,54 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
     lenisRef.current = lenis;
 
+    let rafId: number;
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     // Sync with GSAP ScrollTrigger if GSAP is loaded
-    import("gsap").then(({ default: gsap }) => {
-      import("gsap/ScrollTrigger").then(({ default: ScrollTrigger }) => {
-        gsap.registerPlugin(ScrollTrigger);
+    import("gsap")
+      .then((gsapModule) => {
+        const gsap = gsapModule.default || gsapModule.gsap;
+        return import("gsap/ScrollTrigger").then((triggerModule) => {
+          const ScrollTrigger = triggerModule.default || triggerModule.ScrollTrigger;
+          
+          if (gsap && ScrollTrigger) {
+            gsap.registerPlugin(ScrollTrigger);
 
-        lenis.on("scroll", ScrollTrigger.update);
+            lenis.on("scroll", ScrollTrigger.update);
 
-        ScrollTrigger.scrollerProxy(document.body, {
-          scrollTop(value) {
-            if (arguments.length) {
-              lenis.scrollTo(value!);
-            }
-            return lenis.scroll;
-          },
-          getBoundingClientRect() {
-            return {
-              top: 0,
-              left: 0,
-              width: window.innerWidth,
-              height: window.innerHeight,
-            };
-          },
+            ScrollTrigger.scrollerProxy(document.body, {
+              scrollTop(value) {
+                if (arguments.length) {
+                  lenis.scrollTo(value!);
+                }
+                return lenis.scroll;
+              },
+              getBoundingClientRect() {
+                return {
+                  top: 0,
+                  left: 0,
+                  width: window.innerWidth,
+                  height: window.innerHeight,
+                };
+              },
+            });
+
+            ScrollTrigger.addEventListener("refresh", () => lenis.resize());
+            ScrollTrigger.refresh();
+          }
         });
-
-        ScrollTrigger.addEventListener("refresh", () => lenis.resize());
-        ScrollTrigger.refresh();
+      })
+      .catch((err) => {
+        console.warn("GSAP / ScrollTrigger failed to load or initialize:", err);
       });
-    });
 
     return () => {
+      cancelAnimationFrame(rafId);
       lenis.destroy();
     };
   }, []);

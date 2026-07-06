@@ -1,8 +1,67 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { Activity, Brain, Image, Heart, AlertCircle, FileText } from "lucide-react";
+import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
+import { Activity, Brain, Image, Heart, AlertCircle, FileText, LucideIcon } from "lucide-react";
+
+interface AssetType {
+  type: string;
+  text: string;
+  desc?: string;
+  icon: LucideIcon;
+  x: string;
+  y: string;
+  zSpeed: number;
+  color: string;
+}
+
+function FloatingAsset({ asset, scrollYProgress }: { asset: AssetType; scrollYProgress: MotionValue<number> }) {
+  const yRange = [0, 0.4, 0.7, 1];
+  const yTranslate = [
+    `calc(${asset.y} + 200px)`,
+    `calc(${asset.y} + 50px)`,
+    `calc(${asset.y} - 250px)`,
+    `calc(${asset.y} - 600px)`
+  ];
+  const scaleRange = [0.4, 0.8, 1.2, 2.0];
+  const opacityRange = [0, 0.8, 0.9, 0];
+
+  const yVal = useTransform(scrollYProgress, yRange, yTranslate);
+  const scaleVal = useTransform(scrollYProgress, yRange, scaleRange);
+  const opacityVal = useTransform(scrollYProgress, yRange, opacityRange);
+
+  const Icon = asset.icon;
+
+  return (
+    <motion.div
+      style={{
+        left: asset.x,
+        top: yVal,
+        scale: scaleVal,
+        opacity: opacityVal,
+        transformOrigin: "center center",
+      }}
+      className="absolute z-10 p-3.5 md:p-5 rounded-2xl glass-card border border-white/10 shadow-2xl flex items-start gap-3 w-56 backdrop-blur-md pointer-events-auto cursor-pointer"
+    >
+      <div className={`p-2 rounded-lg bg-white/5 ${asset.color} border border-white/5`}>
+        <Icon size={18} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">
+          {asset.type}
+        </div>
+        <div className="text-xs md:text-sm font-bold text-white mt-0.5 truncate">
+          {asset.text}
+        </div>
+        {asset.desc && (
+          <div className="text-[9px] text-white/50 mt-1 line-clamp-2 leading-relaxed">
+            {asset.desc}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
 
 export default function KnowledgeUniverse() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -11,8 +70,8 @@ export default function KnowledgeUniverse() {
     offset: ["start end", "end start"],
   });
 
-  // Generate 24 floating elements with varied starting positions and parallax speeds
-  const floatingAssets = [
+  // Generate floating elements
+  const floatingAssets: AssetType[] = [
     { type: "subject", text: "Biochemistry", icon: Brain, x: "12%", y: "15%", zSpeed: 2.2, color: "text-[#4F8CFF]" },
     { type: "note", text: "Reed-Sternberg Cells", desc: "Hodgkin Lymphoma Marker", icon: FileText, x: "78%", y: "10%", zSpeed: 1.8, color: "text-[#00E5A8]" },
     { type: "ecg", text: "Mobitz Type II Block", icon: Activity, x: "50%", y: "25%", zSpeed: 2.5, color: "text-red-400" },
@@ -56,60 +115,13 @@ export default function KnowledgeUniverse() {
 
       {/* 3D Asset Canvas */}
       <div className="relative flex-1 w-full min-h-[90vh] mt-12 select-none pointer-events-none">
-        {floatingAssets.map((asset, index) => {
-          // Compute vertical translation and scaling values based on scroll progression and custom speeds
-          // As we scroll, assets should move up/out and scale up, fading in then out
-          const yRange = [0, 0.4, 0.7, 1];
-          const yTranslate = [
-            `calc(${asset.y} + 200px)`,
-            `calc(${asset.y} + 50px)`,
-            `calc(${asset.y} - 250px)`,
-            `calc(${asset.y} - 600px)`
-          ];
-          const scaleRange = [0.4, 0.8, 1.2, 2.0];
-          const opacityRange = [0, 0.8, 0.9, 0];
-
-          // Use Framer Motion hook to convert scroll values to coordinate transforms
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const yVal = useTransform(scrollYProgress, yRange, yTranslate);
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const scaleVal = useTransform(scrollYProgress, yRange, scaleRange);
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const opacityVal = useTransform(scrollYProgress, yRange, opacityRange);
-
-          const Icon = asset.icon;
-
-          return (
-            <motion.div
-              key={index}
-              style={{
-                left: asset.x,
-                top: yVal,
-                scale: scaleVal,
-                opacity: opacityVal,
-                transformOrigin: "center center",
-              }}
-              className="absolute z-10 p-3.5 md:p-5 rounded-2xl glass-card border border-white/10 shadow-2xl flex items-start gap-3 w-56 backdrop-blur-md pointer-events-auto cursor-pointer"
-            >
-              <div className={`p-2 rounded-lg bg-white/5 ${asset.color} border border-white/5`}>
-                <Icon size={18} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">
-                  {asset.type}
-                </div>
-                <div className="text-xs md:text-sm font-bold text-white mt-0.5 truncate">
-                  {asset.text}
-                </div>
-                {asset.desc && (
-                  <div className="text-[9px] text-white/50 mt-1 line-clamp-2 leading-relaxed">
-                    {asset.desc}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
+        {floatingAssets.map((asset, index) => (
+          <FloatingAsset
+            key={index}
+            asset={asset}
+            scrollYProgress={scrollYProgress}
+          />
+        ))}
       </div>
     </div>
   );

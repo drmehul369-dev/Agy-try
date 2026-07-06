@@ -27,15 +27,20 @@ export default function CustomCursor() {
     window.addEventListener("mousemove", moveCursor);
 
     const handleMouseOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (
+      const target = e.target as HTMLElement | null;
+      if (!target || typeof target.getAttribute !== "function") return;
+
+      const isHoverable =
         target.tagName === "A" ||
         target.tagName === "BUTTON" ||
-        target.closest("a") ||
-        target.closest("button") ||
-        target.closest("[role='button']") ||
-        target.getAttribute("data-hoverable") === "true"
-      ) {
+        (target.closest && (
+          target.closest("a") ||
+          target.closest("button") ||
+          target.closest("[role='button']")
+        )) ||
+        target.getAttribute("data-hoverable") === "true";
+
+      if (isHoverable) {
         setHovered(true);
         const text = target.getAttribute("data-cursor-text") || "";
         setCursorText(text);
